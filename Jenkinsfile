@@ -9,9 +9,9 @@ pipeline {
     stages {
         stage('INFO'){
             steps{
-                sh "Build name: ${BUILD_NAME}"
-                sh "Build number: ${BUILD_NUMBER}"
-                sh "Git tag: ${GIT_TAG}"
+                echo "Build name: ${BUILD_NAME}"
+                echo "Build number: ${BUILD_NUMBER}"
+                echo "Git tag: ${GIT_TAG}"
             }
         }
         stage('Build Gradle') {
