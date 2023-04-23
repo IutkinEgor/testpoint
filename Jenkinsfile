@@ -7,6 +7,13 @@ pipeline {
     }
 
     stages {
+        stage('INFO'){
+            steps{
+                sh "Build name: ${BUILD_NAME}"
+                sh "Build number: ${BUILD_NUMBER}"
+                sh "Git tag: ${GIT_TAG}"
+            }
+        }
         stage('Build Gradle') {
             steps {
                 checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/IutkinEgor/testpoint.git']])
