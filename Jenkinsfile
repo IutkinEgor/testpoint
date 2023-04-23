@@ -11,6 +11,7 @@ pipeline {
             steps{
                 echo "Build number: ${BUILD_NUMBER}"
                 echo "Job name: ${JOB_NAME}"
+                echo "Git tag: ${GIT_TAG}"
             }
         }
         stage('Build Gradle') {
