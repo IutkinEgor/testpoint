@@ -16,7 +16,7 @@ pipeline {
         stage('Build docker image') {
             steps {
                     sh "cd docker"
-                    sh "docker build -t iutkined/testpoint ."
+                    sh "docker build -t testpoint ."
             }
         }
     }
