@@ -3,7 +3,7 @@ RUN ["mkdir", "app"]
 WORKDIR app
 COPY *.jar app.jar
 EXPOSE 8080
-# Random comment
+
 # -Xms512m - sets the initial heap size to 512mb of the maximum heap size.
 # -Xmx1024m - sets the maximum heap size to 1024mb of the container memory limit.
 # -XX:InitialRAMPercentage=60 - sets the initial heap size to 60% of the maximum heap size.
