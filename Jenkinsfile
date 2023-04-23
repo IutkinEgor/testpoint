@@ -9,8 +9,8 @@ pipeline {
     stages {
         stage('INFO'){
             steps{
-                echo "Build name: ${BUILD_NAME}"
                 echo "Build number: ${BUILD_NUMBER}"
+                echo "Job name: ${JOB_NAME}"
             }
         }
         stage('Build Gradle') {
