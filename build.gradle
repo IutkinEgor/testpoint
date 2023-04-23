@@ -9,8 +9,10 @@ group = 'com.example'
 version = 'v0.1.0'
 sourceCompatibility = '17'
 
-bootJar {
-    archiveFileName = "testendpoint-${version}.jar"
+ext {
+    appName = 'im-testpoint'
+    appVersion = '0.1.0'
+    appMainClass = 'com.example.testpoint.TestpointApplication'
 }
 
 repositories {
@@ -20,9 +22,26 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+
+task buildAndPutInDockerRoot(type: GradleBuild) {
+    def outputDir = file("$rootDir/docker/")
+    buildFile = 'build.gradle'
+    bootJar {
+        baseName = appName
+        version = appVersion
+        mainClass = appMainClass
+    }
+    tasks = ['bootJar']
+    doFirst {
+        delete fileTree(outputDir).include('*.jar')
+    }
+    doLast {
+        copy {
+            from "$rootDir/build/libs"
+            into outputDir
+            include "*${appVersion}.jar"
+        }
+    }
 }

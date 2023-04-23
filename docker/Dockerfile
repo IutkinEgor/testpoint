@@ -12,4 +12,4 @@ EXPOSE 8080
 # -server - tells the JVM to use the "server" version of the virtual machine, which is optimized for long-running, multi-threaded applications.
 # -XX:+UnlockExperimentalVMOptions - option unlocks experimental options for the JVM. This is required to use certain options that are not yet fully supported.
 # -XX:+UseCGroupMemoryLimitForHeap - option tells the JVM to use the memory limit set by Docker's cgroup for the container as the maximum heap size.
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "testpoint.jar"]
