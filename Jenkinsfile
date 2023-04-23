@@ -15,10 +15,9 @@ pipeline {
         }
         stage('Build docker image') {
             steps {
-                    sh "cd docker"
-                    echo "In docker dir. Print all: "
-                    sh "ls -a"
+                dir('docker'){
                     sh "docker build -t testpoint ."
+                }
             }
         }
     }
