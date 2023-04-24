@@ -10,9 +10,9 @@ pipeline {
     stages {
         stage('Info'){
             steps{
-                echo "Build number: ${BUILD_NUMBER}"
-                echo "Job name: ${JOB_NAME}"
-                echo "Git tag: ${GIT_TAG}"
+                echo "Build number: $BUILD_NUMBER"
+                echo "Job name: $JOB_NAME"
+                echo "Git tag: $GIT_TAG"
             }
         }
         stage('Checkout') {
@@ -29,14 +29,14 @@ pipeline {
         stage('Build docker image') {
             steps {
                 dir('docker'){
-                    sh "docker build -t $DOCKER_HUB_USR/testpoint:${GIT_TAG} ."
+                    sh "docker build -t $DOCKER_HUB_USR/testpoint:$GIT_TAG ."
                 }
             }
         }
         stage('Push to docker hub') {
             steps {
                 sh 'docker login -u $DOCKER_HUB_USR -p $DOCKER_HUB_PSW'
-                sh "docker push -t $DOCKER_HUB_USR/testpoint:${GIT_TAG} ."
+                sh "docker image push $DOCKER_HUB_USR/testpoint:$GIT_TAG ."
                 sh "docker logout"
             }
         }
