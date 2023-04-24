@@ -3,7 +3,7 @@ pipeline {
     tools {
         // Install the Gradle version configured and add it to the path.
         gradle "gradle_7_6_1"
-        gradle "openjdk_17"
+        jdk "openjdk_17"
     }
     environment {
         DOCKER_HUB = credentials('DOCKER_HUB')
