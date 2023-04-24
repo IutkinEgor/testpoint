@@ -36,7 +36,7 @@ pipeline {
         stage('Push to docker hub') {
             steps {
                 sh 'docker login -u $DOCKER_HUB_USR -p $DOCKER_HUB_PSW'
-                sh "docker image push $DOCKER_HUB_USR/testpoint:$GIT_TAG ."
+                sh "docker push $DOCKER_HUB_USR/testpoint:$GIT_TAG ."
                 sh "docker logout"
             }
         }
