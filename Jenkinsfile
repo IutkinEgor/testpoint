@@ -44,7 +44,7 @@ pipeline {
             steps {
                 script {
                     def oldContainerId = sh(returnStdout: true, script: "docker ps --filter ancestor=testpoint --format='{{.ID}}'")
-                    if(oldContainerId != null) {
+                    if(oldContainerId?.trim()) {
                         echo "Old container id: $oldContainerId"
                         sh("docker stop $oldContainerId")
                     }
@@ -53,14 +53,14 @@ pipeline {
                     sleep time: 30, unit: 'SECONDS'
                     if (inspectResult != 'running') {
                         error "Container failed to start"
-                        if(oldContainerId != null) {
+                        if(oldContainerId?.trim()) {
                             sh "docker run $oldContainerId"
                         }
                         sh "docker logs $newContainerId"
                         sh "docker rm -i $newContainerId"
                     }
                     else {
-                        if(oldContainerId != null) {
+                        if(oldContainerId?.trim()) {
                             sh "docker rm -i $oldContainerId"
                         }
                     }
