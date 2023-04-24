@@ -43,25 +43,24 @@ pipeline {
         stage('Run container') {
             steps {
                 script {
-                    def oldContainerId = sh(returnStdout: true, script: "docker ps --filter ancestor=testpoint --format='{{.ID}}'").trim()
-                    if(oldContainerId ?: true) {
-                        echo $oldContainerId
+                    def oldContainerId = sh(returnStdout: true, script: "docker ps --filter ancestor=testpoint --format='{{.ID}}'")
+                    if(oldContainerId != null) {
                         echo "Old container id: $oldContainerId"
                         sh("docker stop $oldContainerId")
                     }
                     def newContainerId = sh("docker run $DOCKER_HUB_USR/testpoint:$GIT_TAG")
-                    def inspectResult = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $newContainerId").trim()
+                    def inspectResult = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $newContainerId")
                     sleep time: 30, unit: 'SECONDS'
                     if (inspectResult != 'running') {
                         error "Container failed to start"
-                        if(oldContainerId ?: true) {
+                        if(oldContainerId != null) {
                             sh "docker run $oldContainerId"
                         }
                         sh "docker logs $newContainerId"
                         sh "docker rm -i $newContainerId"
                     }
                     else {
-                        if(oldContainerId ?: true) {
+                        if(oldContainerId != null) {
                             sh "docker rm -i $oldContainerId"
                         }
                     }
