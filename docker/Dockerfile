@@ -1,9 +1,9 @@
 FROM eclipse-temurin:17.0.6_10-jre-focal
+
 RUN ["mkdir", "app"]
 WORKDIR app
-COPY *.jar app.jar
+COPY ["*.jar", "app.jar"]
 EXPOSE 8080
-
 
 # -Xms512m - sets the initial heap size to 512mb of the maximum heap size.
 # -Xmx1024m - sets the maximum heap size to 1024mb of the container memory limit.
@@ -13,4 +13,4 @@ EXPOSE 8080
 # -server - tells the JVM to use the "server" version of the virtual machine, which is optimized for long-running, multi-threaded applications.
 # -XX:+UnlockExperimentalVMOptions - option unlocks experimental options for the JVM. This is required to use certain options that are not yet fully supported.
 # -XX:+UseCGroupMemoryLimitForHeap - option tells the JVM to use the memory limit set by Docker's cgroup for the container as the maximum heap size.
-ENTRYPOINT ["java", "-jar", "testpoint.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
