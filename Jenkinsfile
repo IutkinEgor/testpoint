@@ -48,9 +48,10 @@ pipeline {
                         echo "Old container id: $oldContainerId"
                         sh("docker stop $oldContainerId")
                     }
-                    def newContainerId = sh("docker run -d $DOCKER_HUB_USR/testpoint:$GIT_TAG")
-                    def inspectResult = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $newContainerId")
+                    sh("docker run -d -t testpoint:$GIT_TAG $DOCKER_HUB_USR/testpoint:$GIT_TAG")
                     sleep time: 30, unit: 'SECONDS'
+                    def inspectResult = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $(docker ps -lq)")
+                    echo "Inspect result: $inspectResult"
                     if (inspectResult != 'running') {
                         error "Container failed to start"
                         if(oldContainerId?.trim()) {
