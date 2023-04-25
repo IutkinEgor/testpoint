@@ -30,7 +30,7 @@ public class TestController {
     }
     @GetMapping("4")
     public ResponseEntity<String> getValue5(){
-        return new ResponseEntity<>("Test message 5", HttpStatus.OK);
+        return new ResponseEntity<>("Test message 6", HttpStatus.OK);
     }
 
 }
