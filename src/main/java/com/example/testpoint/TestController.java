@@ -29,8 +29,13 @@ public class TestController {
         return new ResponseEntity<>("Test message 3", HttpStatus.OK);
     }
     @GetMapping("4")
+    public ResponseEntity<String> getValue4(){
+        return new ResponseEntity<>("Test message 4", HttpStatus.OK);
+    }
+
+    @GetMapping("5")
     public ResponseEntity<String> getValue5(){
-        return new ResponseEntity<>("Test message 6", HttpStatus.OK);
+        return new ResponseEntity<>("Test message 5", HttpStatus.OK);
     }
 
 }
