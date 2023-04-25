@@ -1,11 +1,13 @@
 pipeline {
     agent any
     tools {
-        // Install the Gradle version configured and add it to the path.
         gradle "gradle_7_6_1"
     }
     environment {
         DOCKER_HUB = credentials('DOCKER_HUB')
+        NEW_CONTAINER_ID = ""
+        OLD_CONTAINER_ID = ""
+        STATUS = ""
     }
     stages {
         stage('Info'){
@@ -29,44 +31,111 @@ pipeline {
         stage('Build docker image') {
             steps {
                 dir('docker'){
-                    sh "docker build -t $DOCKER_HUB_USR/testpoint:$GIT_TAG ."
+                    script {
+                        def newImageId = sh(returnStdout: true, script: 'docker build -q -t $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG .')?.trim()
+                        echo "New image id: $newImageId"
+                    }
                 }
             }
         }
         stage('Push to docker hub') {
             steps {
                 sh 'docker login -u $DOCKER_HUB_USR -p $DOCKER_HUB_PSW'
-                sh "docker push $DOCKER_HUB_USR/testpoint:$GIT_TAG"
+                sh "docker push $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG"
                 sh "docker logout"
             }
         }
-        stage('Run container') {
+        stage('Stop old container'){
             steps {
                 script {
-                    def oldContainerId = sh(returnStdout: true, script: "docker ps --filter ancestor=testpoint --format='{{.ID}}'")
-                    if(oldContainerId?.trim()) {
-                        echo "Old container id: $oldContainerId"
-                        sh("docker stop $oldContainerId")
-                    }
-                    sh("docker run -d -t testpoint:$GIT_TAG $DOCKER_HUB_USR/testpoint:$GIT_TAG")
-                    sleep time: 30, unit: 'SECONDS'
-                    def inspectResult = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $(docker ps -lq)")
-                    echo "Inspect result: $inspectResult"
-                    if (inspectResult != 'running') {
-                        error "Container failed to start"
-                        if(oldContainerId?.trim()) {
-                            sh "docker run -d $oldContainerId"
-                        }
-                        sh "docker logs $newContainerId"
-                        sh "docker rm -i $newContainerId"
+                    OLD_CONTAINER_ID = sh(returnStdout: true, script: "docker ps | grep $DOCKER_HUB_USR/$JOB_NAME | awk '{ print \$1 }'")?.trim()
+                    if(OLD_CONTAINER_ID){
+                        sh "docker stop $OLD_CONTAINER_ID"
                     }
                     else {
-                        if(oldContainerId?.trim()) {
-                            sh "docker rm -i $oldContainerId"
+                        echo "Old container not detected"
+                    }
+                }
+            }
+        }
+        stage('Run new container') {
+            steps {
+                script {
+                    sh "docker run -d --name ${JOB_NAME}_${BUILD_NUMBER}  $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG"
+                    NEW_CONTAINER_ID = sh(returnStdout: true, script: "docker ps -q --filter=NAME=${JOB_NAME}_${BUILD_NUMBER}")?.trim()
+                    echo "New container id: $NEW_CONTAINER_ID"
+                }
+            }
+        }
+        stage('Await 30 seconds'){
+            steps {
+                sleep time: 30, unit: 'SECONDS'
+            }
+        }
+        stage('Check status') {
+            steps {
+                script {
+                    STATUS = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $NEW_CONTAINER_ID")?.trim()
+                    echo "Status: $STATUS"
+                    if(STATUS != 'running') {
+                        error "New container filed to start"
+                    }
+                }
+            }
+        }
+        stage('On Success') {
+            when {
+                expression { STATUS == 'running'}
+            }
+            stages {
+                stage('Remove old container') {
+                    steps {
+                        script {
+                            if(OLD_CONTAINER_ID){
+                                def oldImageTag = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $OLD_CONTAINER_ID")?.trim()
+                                def newImageTag = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $NEW_CONTAINER_ID")?.trim()
+                                if(oldImageTag == newImageTag) {
+                                    echo "Old and new container based on the same image tag"
+                                } else {
+                                    sh "docker rmi $oldImageTag"
+                                }
+                            } else {
+                                echo "Old container not detected"
+                            }
                         }
                     }
                 }
             }
         }
+        stage('On Failure') {
+            when {
+                expression { STATUS != 'running'}
+            }
+            stages {
+               stage('Restart old container') {
+                   steps {
+                       script {
+                         if(OLD_CONTAINER_ID){
+                               sh "docker run -d $OLD_CONTAINER_ID"
+                           } else {
+                               echo "Old container not detected"
+                           }
+                       }
+                   }
+               }
+               stage('Failed container log') {
+                   steps {
+                       sh "docker logs $NEW_CONTAINER_ID"
+                   }
+               }
+               stage('Remove failed container') {
+                   steps {
+                       sh "docker rm $NEW_CONTAINER_ID"
+                   }
+               }
+            }
+        }
     }
 }
+
+
