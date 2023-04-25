@@ -1,5 +1,6 @@
 package com.example.testpoint;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,9 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/test")
 public class TestController {
 
+    @Value("${app.test}")
+    private Boolean test;
+
     @GetMapping("1")
     public ResponseEntity<String> getValue1(){
-        return new ResponseEntity<>("Test message 1", HttpStatus.OK);
+        return new ResponseEntity<>("Test message 1: " + test, HttpStatus.OK);
     }
 
     @GetMapping("2")
