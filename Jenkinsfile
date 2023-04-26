@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    triggers {
-        githubTagPush()
-    }
     tools {
         gradle "gradle_7_6_1"
     }
