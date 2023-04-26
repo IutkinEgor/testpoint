@@ -85,6 +85,17 @@ pipeline {
                     steps {
                         script {
                             if(OLD_CONTAINER_ID){
+                                sh "docker rm $OLD_CONTAINER_ID"
+                            } else {
+                                echo "Old container not detected"
+                            }
+                        }
+                    }
+                }
+                stage('Remove old tag') {
+                    steps {
+                        script {
+                            if(OLD_CONTAINER_ID){
                                 def oldImageTag = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $OLD_CONTAINER_ID")?.trim()
                                 def newImageTag = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $NEW_CONTAINER_ID")?.trim()
                                 if(oldImageTag == newImageTag) {
@@ -93,7 +104,7 @@ pipeline {
                                     sh "docker rmi $oldImageTag"
                                 }
                             } else {
-                                echo "Old container not detected"
+                                echo "Old tag not detected"
                             }
                         }
                     }
@@ -125,6 +136,11 @@ pipeline {
                    steps {
                        sh "docker rm $NEW_CONTAINER_ID"
                    }
+               }
+               stage('Remove failed tag') {
+                    steps {
+                        sh "docker rmi $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG"
+                    }
                }
             }
         }
