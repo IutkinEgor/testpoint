@@ -10,6 +10,7 @@ pipeline {
         NEW_IMAGE_TAG = ""
         OLD_IMAGE_TAG = ""
         STATUS = ""
+        STATUS_RUNNING = false
     }
     stages {
         stage('Info'){
@@ -74,75 +75,79 @@ pipeline {
             steps {
                 script {
                     STATUS = sh(returnStdout: true, script: "docker inspect --format='{{.State.Status}}' $NEW_CONTAINER_ID")?.trim()
+                    STATUS_RUNNING = (STATUS == 'running')
                     echo "Status: $STATUS"
-                    if(STATUS != 'running') {
-                        error "New container filed to start"
-                    }
-                }
-            }
-        }
-        stage('On Success') {
-            when {
-                expression { STATUS == 'running'}
-            }
-            stages {
-                stage('Remove old container') {
-                    steps {
-                        script {
-                            if(OLD_CONTAINER_ID){
-                                sh "docker rm $OLD_CONTAINER_ID"
-                            } else {
-                                echo "Old container not detected"
+                    if(STATUS_RUNNING) {
+                        stage('Remove old container') {
+                            steps {
+                                script {
+                                    if(OLD_CONTAINER_ID){
+                                        sh "docker rm $OLD_CONTAINER_ID"
+                                    } else {
+                                        echo "Old container not detected"
+                                    }
+                                }
+                            }
+                        }
+                        stage('Remove old tag') {
+                            steps {
+                                script {
+                                    if(OLD_IMAGE_TAG){
+                                        sh "docker rmi $OLD_IMAGE_TAG"
+                                    } else {
+                                        echo "Old tag not detected"
+                                    }
+                                }
                             }
                         }
                     }
-                }
-                stage('Remove old tag') {
-                    steps {
-                        script {
-                            if(OLD_IMAGE_TAG){
-                                sh "docker rmi $OLD_IMAGE_TAG"
-                            } else {
-                                echo "Old tag not detected"
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        stage('On Failure') {
-            when {
-                expression { STATUS != 'running'}
-            }
-            stages {
-               stage('Restart old container') {
-                   steps {
-                       script {
-                         if(OLD_CONTAINER_ID){
-                               sh "docker run -d $OLD_CONTAINER_ID"
-                           } else {
-                               echo "Old container not detected"
+                    if(!STATUS_RUNNING) {
+                        stage('Restart old container') {
+                           steps {
+                               script {
+                                 if(OLD_CONTAINER_ID){
+                                       sh "docker run -d $OLD_CONTAINER_ID"
+                                   } else {
+                                       echo "Old container not detected"
+                                   }
+                               }
                            }
                        }
-                   }
-               }
-               stage('Failed container log') {
-                   steps {
-                       sh "docker logs $NEW_CONTAINER_ID"
-                   }
-               }
-               stage('Remove failed container') {
-                   steps {
-                       sh "docker rm $NEW_CONTAINER_ID"
-                   }
-               }
-               stage('Remove failed tag') {
-                    steps {
-                        sh "docker rmi $NEW_IMAGE_TAG"
+                       stage('Failed container log') {
+                           steps {
+                               sh "docker logs $NEW_CONTAINER_ID"
+                           }
+                       }
+                       stage('Remove failed container') {
+                           steps {
+                               sh "docker rm $NEW_CONTAINER_ID"
+                           }
+                       }
+                       stage('Remove failed tag') {
+                            steps {
+                                sh "docker rmi $NEW_IMAGE_TAG"
+                            }
+                       }
                     }
-               }
+                }
             }
         }
+//         stage('On Success') {
+//             when {
+//                 expression { STATUS == 'running'}
+//             }
+//             stages {
+//
+//             }
+//         }
+//         stage('On Failure') {
+//             when {
+//                 expression { STATUS != 'running'}
+//             }
+//             stages {
+//
+//             }
+//         }
     }
 }
 
