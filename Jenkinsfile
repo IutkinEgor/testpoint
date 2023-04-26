@@ -7,6 +7,8 @@ pipeline {
         DOCKER_HUB = credentials('DOCKER_HUB')
         NEW_CONTAINER_ID = ""
         OLD_CONTAINER_ID = ""
+        NEW_IMAGE_TAG = ""
+        OLD_IMAGE_TAG = ""
         STATUS = ""
     }
     stages {
@@ -43,6 +45,7 @@ pipeline {
                 script {
                     OLD_CONTAINER_ID = sh(returnStdout: true, script: "docker ps | grep $DOCKER_HUB_USR/$JOB_NAME | awk '{ print \$1 }'")?.trim()
                     if(OLD_CONTAINER_ID){
+                        OLD_IMAGE_TAG = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $OLD_CONTAINER_ID")?.trim()
                         sh "docker stop $OLD_CONTAINER_ID"
                     }
                     else {
@@ -56,7 +59,9 @@ pipeline {
                 script {
                     sh "docker run -d --name ${JOB_NAME}_${BUILD_NUMBER}  $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG"
                     NEW_CONTAINER_ID = sh(returnStdout: true, script: "docker ps -q --filter=NAME=${JOB_NAME}_${BUILD_NUMBER}")?.trim()
+                    NEW_IMAGE_TAG = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $NEW_CONTAINER_ID")?.trim()
                     echo "New container id: $NEW_CONTAINER_ID"
+                    echo "New image tag: $NEW_IMAGE_TAG"
                 }
             }
         }
@@ -95,14 +100,8 @@ pipeline {
                 stage('Remove old tag') {
                     steps {
                         script {
-                            if(OLD_CONTAINER_ID){
-                                def oldImageTag = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $OLD_CONTAINER_ID")?.trim()
-                                def newImageTag = sh(returnStdout: true, script: "docker inspect --format='{{.Config.Image}}' $NEW_CONTAINER_ID")?.trim()
-                                if(oldImageTag == newImageTag) {
-                                    echo "Old and new container based on the same image tag"
-                                } else {
-                                    sh "docker rmi $oldImageTag"
-                                }
+                            if(OLD_IMAGE_TAG){
+                                sh "docker rmi $OLD_IMAGE_TAG"
                             } else {
                                 echo "Old tag not detected"
                             }
@@ -139,7 +138,7 @@ pipeline {
                }
                stage('Remove failed tag') {
                     steps {
-                        sh "docker rmi $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG"
+                        sh "docker rmi $NEW_IMAGE_TAG"
                     }
                }
             }
