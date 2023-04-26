@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    triggers {
+        githubTagPush()
+    }
     tools {
         gradle "gradle_7_6_1"
     }
@@ -36,13 +39,6 @@ pipeline {
                         echo "New image id: $newImageId"
                     }
                 }
-            }
-        }
-        stage('Push to docker hub') {
-            steps {
-                sh 'docker login -u $DOCKER_HUB_USR -p $DOCKER_HUB_PSW'
-                sh "docker push $DOCKER_HUB_USR/$JOB_NAME:$GIT_TAG"
-                sh "docker logout"
             }
         }
         stage('Stop old container'){
